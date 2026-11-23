@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SDE Prep Bot</title>
+<style>
+  :root{
+    --bg:#f4f5f7; --panel:#ffffff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
+    --head:#0f172a; --accent:#f59e0b; --accent-ink:#78350f; --accent-soft:#fef3c7;
+    --user:#1e293b; --code:#0b1220; --code-ink:#e2e8f0; --ok:#22c55e;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center}
+  .app{width:100%;max-width:980px;height:100vh;display:flex;flex-direction:column;background:var(--panel);box-shadow:0 0 0 1px var(--line)}
+  @media (min-width:1000px){.app{height:calc(100vh - 32px);margin:16px 0;border-radius:16px;overflow:hidden}}
+
+  header{background:var(--head);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:14px}
+  .logo{width:42px;height:42px;border-radius:50%;background:var(--accent);color:var(--head);display:grid;place-items:center;font-weight:800;font-size:18px;flex:none}
+  .title{font-weight:700;font-size:17px}
+  .sub{font-size:12.5px;color:#cbd5e1;display:flex;align-items:center;gap:6px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+  .dot.off{background:#ef4444}
+  .head-actions{margin-left:auto;display:flex;gap:8px}
+  .hbtn{background:transparent;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+  .hbtn:hover{background:#1e293b}
+  .hbtn.on{background:var(--accent);border-color:var(--accent);color:var(--head);font-weight:700}
+
+  .tabs{display:flex;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin;flex:none}
+  .tab{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer;color:#374151}
+  .tab:hover{border-color:#cbd5e1}
+  .tab.active{background:var(--head);color:#fff;border-color:var(--head)}
+
+  #chat{flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:14px;background:#fafafa}
+  .msg{max-width:82%;padding:12px 16px;border-radius:14px;word-wrap:break-word;overflow-wrap:anywhere}
+  .bot{align-self:flex-start;background:#fff;border:1px solid var(--line)}
+  .user{align-self:flex-end;background:var(--user);color:#fff;white-space:pre-wrap}
+  .bot p{margin:.35em 0}
+  .bot h1,.bot h2,.bot h3,.bot h4{margin:.6em 0 .3em;font-size:15.5px}
+  .bot ul,.bot ol{margin:.3em 0;padding-left:1.3em}
+  .bot code{background:#f1f5f9;border-radius:4px;padding:1px 5px;font:13px/1.4 ui-monospace,Consolas,monospace}
+  .bot table{border-collapse:collapse;margin:.5em 0;font-size:13.5px;display:block;overflow-x:auto}
+  .bot th,.bot td{border:1px solid var(--line);padding:4px 8px;text-align:left}
+  .bot th{background:#f8fafc}
+  .codewrap{position:relative;margin:.6em 0}
+  .codewrap pre{margin:0;background:var(--code);color:var(--code-ink);padding:12px 14px;border-radius:10px;overflow-x:auto;font:13px/1.5 ui-monospace,Consolas,monospace}
+  .codewrap pre code{background:none;padding:0;color:inherit}
+  .lang{position:absolute;top:6px;left:12px;font-size:10.5px;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
+  .codewrap pre{padding-top:24px}
+  .copy{position:absolute;top:6px;right:8px;background:#1e293b;color:#cbd5e1;border:0;border-radius:6px;font-size:11.5px;padding:3px 8px;cursor:pointer}
+  .copy:hover{background:#334155}
+  .source{margin-top:8px;font-size:12px;color:var(--muted)}
+  .err{border-color:#fecaca;background:#fef2f2;color:#991b1b}
+  .typing{display:inline-flex;gap:4px}
+  .typing span{width:7px;height:7px;border-radius:50%;background:#9ca3af;animation:b 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+  @keyframes b{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+
+  .chips{display:flex;gap:8px;padding:10px 14px;overflow-x:auto;border-top:1px solid var(--line);flex:none;scrollbar-width:thin}
+  .chip{white-space:nowrap;background:var(--accent-soft);color:var(--accent-ink);border:1px solid #fcd34d;border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+  .chip:hover{background:#fde68a}
+
+  form{display:flex;gap:10px;padding:12px 14px;border-top:1px solid var(--line);flex:none;background:#fff}
+  textarea{flex:1;resize:none;border:1px solid #d1d5db;border-radius:12px;padding:11px 14px;font:inherit;max-height:140px;outline:none}
+  textarea:focus{border-color:var(--head)}
+  .send{background:var(--head);color:#fff;border:0;border-radius:12px;padding:0 20px;font-weight:600;cursor:pointer}
+  .send:disabled{opacity:.5;cursor:not-allowed}
+  .quizbar{display:none;align-items:center;gap:8px;padding:8px 14px;background:var(--accent-soft);color:var(--accent-ink);font-size:13px;border-top:1px solid #fcd34d}
+  .quizbar.show{display:flex}
+  .quizbar button{margin-left:auto;background:#fff;border:1px solid #fcd34d;border-radius:8px;padding:3px 10px;cursor:pointer;color:var(--accent-ink)}
+  @media (max-width:600px){.msg{max-width:92%}.head-actions .hbtn span{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">S</div>
+    <div>
+      <div class="title">SDE Prep Bot</div>
+      <div class="sub"><span class="dot" id="statusDot"></span><span id="statusText">Grounded in your SDE knowledge base</span></div>
+    </div>
+    <div class="head-actions">
+      <button class="hbtn" id="quizBtn" title="Quiz me on the current topic">🎯 <span>Quiz me</span></button>
+      <button class="hbtn" id="javaBtn" title="Ask for code in Java">☕ <span>Java</span></button>
+      <button class="hbtn" id="clearBtn" title="Clear chat">↺ <span>Clear</span></button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs"></nav>
+  <main id="chat" aria-live="polite"></main>
+
+  <div class="quizbar" id="quizbar">🎯 Quiz mode: <b id="quizTopic"></b>. Type your answer and I'll grade it.<button id="nextQ">Next question</button><button id="endQuiz">End</button></div>
+  <div class="chips" id="chips"></div>
+
+  <form id="form">
+    <textarea id="input" rows="1" placeholder="Ask anything: patterns, designs, OS, SQL, behavioral…"></textarea>
+    <button class="send" id="sendBtn" type="submit">Send</button>
+  </form>
+</div>
+
+<script>
+/* ---------- Config ---------- */
+const API_URL = "/api/query";         // clientController: POST plain-text body -> plain-text answer
+
+const TOPICS = {
+  "All": ["What should I study first?", "Constraint → complexity table", "UMPIRE framework", "Top 75 problems by pattern"],
+  "Arrays & Hashing": ["Two pointers template", "Sliding window template", "Prefix sum + hashmap", "3Sum explained"],
+  "Binary Search": ["Binary search on answer", "Search in rotated sorted array", "Koko eating bananas", "Common binary search bugs"],
+  "Stack & Heap": ["Monotonic stack template", "Largest rectangle in histogram", "Top-K with heap", "Find median from data stream"],
+  "Trees": ["Tree DFS vs BFS", "Binary tree max path sum", "LCA of binary tree", "Validate BST"],
+  "Graphs": ["BFS vs DFS", "Topological sort (Kahn)", "Union-Find template", "Dijkstra vs Bellman-Ford"],
+  "DP": ["DP 5-step method", "0/1 vs unbounded knapsack", "LIS in O(n log n)", "Edit distance", "Interval DP (burst balloons)"],
+  "Greedy & Backtracking": ["When greedy works", "Jump game II", "Backtracking template", "Subsets vs permutations"],
+  "System Design": ["45-min design framework", "Design URL shortener", "Design rate limiter", "Design chat system", "Fan-out on write vs read", "CAP theorem"],
+  "LLD / OOP": ["SOLID with examples", "Design parking lot", "LRU cache", "Design BookMyShow", "Strategy vs State pattern"],
+  "OS": ["Process vs thread", "Deadlock conditions", "Paging and TLB", "Mutex vs semaphore"],
+  "DBMS & SQL": ["Normalization 1NF to BCNF", "Isolation levels", "B+ tree index", "Nth highest salary SQL", "ACID"],
+  "Networking": ["What happens when you type a URL", "TCP vs UDP", "TLS handshake", "DNS resolution"],
+  "Behavioral": ["STAR method", "Tell me about a conflict", "Amazon leadership principles", "Tell me about yourself", "Negotiation basics"]
+};
+
+/* ---------- State ---------- */
+let activeTopic = "All";
+let quizMode = false;
+let preferJava = false;
+let lastQuizQuestion = "";   // backend has no memory, so the page re-sends the quiz question with the answer
+let busy = false;
+
+const $ = id => document.getElementById(id);
+const chat = $("chat"), input = $("input"), sendBtn = $("sendBtn");
+
+/* ---------- Tiny safe markdown renderer ---------- */
+function esc(s){return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function inline(s){
+  return esc(s)
+    .replace(/`([^`]+)`/g,"<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g,"$1<em>$2</em>");
+}
+function renderMarkdown(md){
+  const lines = md.replace(/\r/g,"").split("\n");
+  let html = "", i = 0;
+  while(i < lines.length){
+    const line = lines[i];
+    const fence = line.match(/^```\s*([\w+#-]*)/);
+    if(fence){
+      const lang = fence[1] || "code"; const buf = []; i++;
+      while(i < lines.length && !/^```/.test(lines[i])) buf.push(lines[i++]);
+      i++;
+      html += `<div class="codewrap"><span class="lang">${esc(lang)}</span><button class="copy" type="button">Copy</button><pre><code>${esc(buf.join("\n"))}</code></pre></div>`;
+      continue;
+    }
+    if(/^\s*\|.*\|\s*$/.test(line) && i+1 < lines.length && /^\s*\|?[\s:-]+\|/.test(lines[i+1])){
+      const row = l => l.trim().replace(/^\||\|$/g,"").split("|").map(c=>c.trim());
+      html += "<table><tr>" + row(line).map(c=>`<th>${inline(c)}</th>`).join("") + "</tr>";
+      i += 2;
+      while(i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+        html += "<tr>" + row(lines[i]).map(c=>`<td>${inline(c)}</td>`).join("") + "</tr>"; i++;
+      }
+      html += "</table>"; continue;
+    }
+    const h = line.match(/^(#{1,4})\s+(.*)/);
+    if(h){ html += `<h${h[1].length+1}>${inline(h[2])}</h${h[1].length+1}>`; i++; continue; }
+    if(/^\s*[-*]\s+/.test(line)){
+      html += "<ul>";
+      while(i < lines.length && /^\s*[-*]\s+/.test(lines[i])) html += `<li>${inline(lines[i++].replace(/^\s*[-*]\s+/,""))}</li>`;
+      html += "</ul>"; continue;
+    }
+    if(/^\s*\d+[.)]\s+/.test(line)){
+      html += "<ol>";
+      while(i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) html += `<li>${inline(lines[i++].replace(/^\s*\d+[.)]\s+/,""))}</li>`;
+      html += "</ol>"; continue;
+    }
+    if(line.trim() === ""){ i++; continue; }
+    const para = [];
+    while(i < lines.length && lines[i].trim() !== "" && !/^(```|#{1,4}\s|\s*[-*]\s|\s*\d+[.)]\s|\s*\|)/.test(lines[i])) para.push(lines[i++]);
+    if(para.length) html += `<p>${para.map(inline).join("<br>")}</p>`; else i++;
+  }
+  return html;
+}
+
+/* ---------- UI helpers ---------- */
+function addMessage(role, text, opts = {}){
+  const div = document.createElement("div");
+  div.className = "msg " + (role === "user" ? "user" : "bot") + (opts.error ? " err" : "");
+  if(role === "user") div.textContent = text;
+  else div.innerHTML = renderMarkdown(text);
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+function showTyping(){
+  const d = document.createElement("div");
+  d.className = "msg bot"; d.innerHTML = '<span class="typing"><span></span><span></span><span></span></span>';
+  chat.appendChild(d); chat.scrollTop = chat.scrollHeight; return d;
+}
+chat.addEventListener("click", e => {
+  if(!e.target.classList.contains("copy")) return;
+  const code = e.target.parentElement.querySelector("code").textContent;
+  navigator.clipboard.writeText(code).then(()=>{ e.target.textContent = "Copied"; setTimeout(()=>e.target.textContent="Copy",1200); });
+});
+
+function renderTabs(){
+  $("tabs").innerHTML = "";
+  Object.keys(TOPICS).forEach(t => {
+    const b = document.createElement("button");
+    b.className = "tab" + (t === activeTopic ? " active" : "");
+    b.textContent = t; b.type = "button";
+    b.onclick = () => { activeTopic = t; renderTabs(); renderChips(); if(quizMode) startQuiz(); };
+    $("tabs").appendChild(b);
+  });
+}
+function renderChips(){
+  $("chips").innerHTML = "";
+  TOPICS[activeTopic].forEach(q => {
+    const c = document.createElement("button");
+    c.className = "chip"; c.type = "button"; c.textContent = q;
+    c.onclick = () => send(q);
+    $("chips").appendChild(c);
+  });
+}
+
+/* ---------- Networking ---------- */
+function buildMessage(text, isQuizStart){
+  const tags = [];
+  if(activeTopic !== "All") tags.push(`[Topic: ${activeTopic}]`);
+  if(preferJava) tags.push("[Give code in Java]");
+  let body = text;
+  // Quiz answer: the backend is stateless, so bundle the question with the user's answer.
+  if(quizMode && !isQuizStart && lastQuizQuestion){
+    body = `Grade my answer to this interview question strictly against the knowledge base.\n` +
+           `Give a score out of 10, list what I missed, then give the ideal answer.\n\n` +
+           `QUESTION:\n${lastQuizQuestion}\n\nMY ANSWER:\n${text}`;
+  }
+  return (tags.length ? tags.join(" ") + "\n" : "") + body;
+}
+async function send(text, {silentUser = false, isQuizStart = false} = {}){
+  text = text.trim();
+  if(!text || busy) return;
+  busy = true; sendBtn.disabled = true;
+  if(!silentUser) addMessage("user", text);
+  input.value = ""; autoGrow();
+  const typing = showTyping();
+  const message = buildMessage(text, isQuizStart);
+  try{
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: {"Content-Type": "text/plain; charset=utf-8"},   // matches @RequestBody String
+      body: message
+    });
+    if(!res.ok) throw new Error(`Server returned ${res.status}`);
+    const reply = await res.text();
+    typing.remove();
+    addMessage("bot", reply);
+    if(isQuizStart) lastQuizQuestion = reply;
+    setStatus(true);
+  }catch(err){
+    typing.remove();
+    addMessage("bot", `**Couldn't reach the backend.** ${err.message}\n\nCheck that Spring Boot is running and \`POST ${API_URL}\` exists.`, {error:true});
+    setStatus(false);
+  }finally{
+    busy = false; sendBtn.disabled = false; input.focus();
+  }
+}
+function setStatus(ok){
+  $("statusDot").className = "dot" + (ok ? "" : " off");
+  $("statusText").textContent = ok ? "Grounded in your SDE knowledge base" : "Backend unreachable";
+}
+
+/* ---------- Quiz mode ---------- */
+function startQuiz(){
+  quizMode = true;
+  $("quizBtn").classList.add("on");
+  $("quizbar").classList.add("show");
+  $("quizTopic").textContent = activeTopic === "All" ? "Mixed topics" : activeTopic;
+  const topic = activeTopic === "All" ? "any topic" : activeTopic;
+  addMessage("user", `🎯 Quiz me on ${topic}`);
+  lastQuizQuestion = "";
+  send(`Quiz mode. Ask me ONE interview question on ${topic} from the knowledge base. Output only the question. Do not give the answer or any hints.`, {silentUser:true, isQuizStart:true});
+}
+function endQuiz(){
+  quizMode = false;
+  lastQuizQuestion = "";
+  $("quizBtn").classList.remove("on");
+  $("quizbar").classList.remove("show");
+}
+$("quizBtn").onclick = () => quizMode ? endQuiz() : startQuiz();
+$("nextQ").onclick = () => startQuiz();
+$("endQuiz").onclick = endQuiz;
+
+$("javaBtn").onclick = () => {
+  preferJava = !preferJava;
+  $("javaBtn").classList.toggle("on", preferJava);
+};
+$("clearBtn").onclick = () => { chat.innerHTML = ""; endQuiz(); greet(); };
+
+/* ---------- Input ---------- */
+function autoGrow(){ input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; }
+input.addEventListener("input", autoGrow);
+input.addEventListener("keydown", e => {
+  if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(input.value); }
+});
+$("form").addEventListener("submit", e => { e.preventDefault(); send(input.value); });
+
+function greet(){
+  addMessage("bot", "Hi! I'm your SDE interview coach, grounded in your 6-volume knowledge base.\n\n- Pick a **topic tab** and tap a question chip\n- Hit **🎯 Quiz me** to get tested (this is what actually builds skill)\n- Toggle **☕ Java** to get code in Java\n\nWhat do you want to work on?");
+}
+
+renderTabs(); renderChips(); greet(); input.focus();
+</script>
+</body>
+</html>
