@@ -1,0 +1,27 @@
+package com.ai.pluginAi.Controller;
+
+import com.ai.pluginAi.Service.EmbeddingService;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/embeding")
+public class EmbeddingController {
+
+   EmbeddingService embeddingService;
+
+   public EmbeddingController (EmbeddingService embeddingService) {
+
+       this.embeddingService = embeddingService;
+   }
+
+   @PostMapping
+    public float[] embed(@RequestBody String embedding) {
+
+       return embeddingService.embeddings(embedding);
+   }
+
+}
